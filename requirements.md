@@ -3,7 +3,7 @@ lab1-ai-draft编号：49b84b2c25943f354bb32c73a87f5570884ecd01
 
 仓库地址：[https://github.com/MisoleNozomi/2026NanjingUniversitysoftwareengineering.git]
 
-版本：[v1.2(补充访谈核对后)]　日期：[2026年10月20日]
+版本：[v1.1(核对后)]　日期：[2026年10月20日]
 
 ## REQ-001 用户注册与登录
 
