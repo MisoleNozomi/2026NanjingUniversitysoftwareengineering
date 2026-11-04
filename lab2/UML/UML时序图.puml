@@ -1,0 +1,50 @@
+@startuml
+title 多人共享记账系统——收支审核时序图
+autonumber
+skinparam shadowing false
+
+actor "审核员" as Reviewer
+boundary "审核页面" as UI
+control "收支审核服务" as Service
+database "数据库" as DB
+
+Reviewer -> UI : 选择记录，提交审核结果
+UI -> Service : 审核(记录ID、版本、结果、原因)
+Service -> DB : 查询当前成员角色和记录
+DB --> Service : 返回成员关系和记录
+Service -> Service : 校验权限、非本人记录、待审核状态\n驳回时必须有原因
+
+alt 校验失败
+  Service --> UI : 拒绝操作并说明原因
+  UI --> Reviewer : 显示提示
+else 校验通过
+  Service -> DB : BEGIN事务
+  Service -> DB : 按版本及待审核条件更新状态\n通过为已审核，驳回为已驳回
+  DB --> Service : 返回更新结果
+
+  alt 更新成功
+    Service -> DB : 在同一事务中保存审核日志
+    DB --> Service : 返回日志保存结果
+
+    alt 日志保存成功
+      Service -> DB : COMMIT
+      Service --> UI : 审核成功
+      UI --> Reviewer : 刷新记录及统计
+    else 日志保存失败
+      Service -> DB : ROLLBACK
+      Service --> UI : 按重试规则处理，仍失败则提示并告警
+    end
+
+  else 记录已被他人修改、撤回或审核
+    Service -> DB : ROLLBACK
+    Service --> UI : 状态已变化，请刷新
+    UI --> Reviewer : 显示冲突提示
+  end
+end
+
+note over Service, DB
+  成功日志与状态更新一起提交或一起回滚。
+  查询统计以已审核有效数据为依据。
+  日志失败自动重试3次；每次重试重新校验。
+end note
+@enduml

@@ -1,0 +1,58 @@
+@startuml
+title 多人共享记账系统——用例图
+left to right direction
+skinparam shadowing false
+
+actor "用户" as User
+actor "账本成员" as Member
+actor "普通成员" as Normal
+actor "账本管理员" as Admin
+actor "审核员" as Reviewer
+
+User <|-- Member
+Member <|-- Normal
+Member <|-- Admin
+Member <|-- Reviewer
+
+rectangle "多人共享记账系统" {
+  usecase "注册登录与密码管理" as Login
+  usecase "创建账本、接受邀请" as Create
+  usecase "新增收支\n修改、撤回及重提本人未审核记录" as Record
+  usecase "组合查询与收支统计" as Query
+  usecase "查看结算明细" as Detail
+  usecase "提交已结算错账更正申请" as Correct
+  usecase "退出账本" as Exit
+  usecase "查看本人相关日志" as OwnLog
+  usecase "邀请成员、设置角色\n转让管理员权限" as Manage
+  usecase "维护分类与预算" as Budget
+  usecase "生成及确认结算" as Settle
+  usecase "审核、驳回、作废记录\n审核更正申请" as Review
+  usecase "查询账本操作日志" as AllLog
+}
+
+User -- Login
+User -- Create
+Member -- Record
+Member -- Query
+Member -- Detail
+Member -- Correct
+Member -- Exit
+Member -- OwnLog
+Admin -- Manage
+Admin -- Budget
+Admin -- Settle
+Admin -- AllLog
+Reviewer -- Review
+Reviewer -- AllLog
+
+note bottom of Member
+  用户、账本成员用于归纳公共能力。
+  实际账本角色为普通成员、管理员、审核员。
+  管理员不自动获得审核员权限。
+end note
+
+note right of Review
+  不得审核本人记录或更正申请。
+  驳回、作废必须填写原因。
+end note
+@enduml

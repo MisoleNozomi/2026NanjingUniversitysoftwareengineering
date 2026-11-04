@@ -1,0 +1,104 @@
+@startuml
+title 多人共享记账系统——类图（核心业务）
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty methods
+
+class "用户" as User {
+  - id: Long
+  - username: String
+  - passwordHash: String
+}
+class "账本" as Ledger {
+  - id: Long
+  - name: String
+  + create()
+}
+class "成员关系" as Member {
+  - id: Long
+  - role: String
+  - active: Boolean
+  + invite()
+  + exit()
+}
+class "分类" as Category {
+  - name: String
+  - enabled: Boolean
+}
+class "收支记录" as Entry {
+  - id: Long
+  - amountCent: Long
+  - status: String
+  + submit()
+  + modify()
+  + withdraw()
+  + review(result, reason)
+  + voidRecord(reason)
+}
+class "分摊明细" as Share {
+  - amountCent: Long
+}
+class "月度预算" as Budget {
+  - month: String
+  - limitCent: Long
+}
+class "结算" as Settlement {
+  - id: Long
+  - status: String
+  - memberAmounts: Map
+  + generate()
+  + confirm()
+}
+class "更正申请" as Correction {
+  - correctedContent: String
+  - reason: String
+  - status: String
+  + submit()
+  + review()
+}
+class "调整明细" as Adjustment {
+  - deltaCent: Long
+}
+class "操作日志" as Log {
+  - operatorId: Long
+  - action: String
+  - time: DateTime
+}
+
+User "1" -- "0..*" Member
+Ledger "1" -- "1..*" Member
+Ledger "1" -- "0..*" Category
+Ledger "1" -- "0..*" Entry
+Ledger "1" -- "0..*" Budget
+Ledger "1" -- "0..*" Settlement
+Ledger "1" -- "0..*" Log
+Entry "0..*" --> "1" Category
+Entry "0..*" --> "1" Member : 记账人
+Entry "0..*" --> "1" Member : 付款人或收款人
+Entry "1" *-- "1..*" Share
+Share "0..*" --> "1" Member
+Settlement "0..1" -- "0..*" Entry : 固定清单
+Correction "0..*" --> "1" Entry : 已结算原记录
+Correction "1" *-- "0..*" Adjustment
+Adjustment "0..*" --> "1" Member
+Settlement "0..1" -- "0..*" Adjustment : 后续调整
+
+note bottom of Member
+  角色属于当前账本的成员关系。
+  同一用户在不同账本可拥有不同角色。
+end note
+
+note bottom of Settlement
+  金额按整数分保存，分摊合计等于原金额。
+  memberAmounts保存成员应收应付快照。
+  固定清单中的记录只能结算一次。
+end note
+
+legend bottom
+  本图只展示主要字段、方法和关联，不是完整数据库结构。
+  记录状态：待审核、已审核、已驳回、已撤回、已作废。
+  未结算错账：作废原记录，提交关联原记录的新记录。
+  已结算错账：原结果保留，通过更正申请生成调整明细。
+  邀请、管理权限转让及日志完整字段在模块说明中补充。
+endlegend
+@enduml

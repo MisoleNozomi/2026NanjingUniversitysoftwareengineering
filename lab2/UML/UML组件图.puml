@@ -1,0 +1,45 @@
+@startuml
+title 多人共享记账系统——组件图
+skinparam componentStyle rectangle
+skinparam shadowing false
+top to bottom direction
+
+component "用户界面" as UI
+
+package "后端应用" {
+  component "用户与账本管理\n注册登录、邀请退出、角色权限" as Account
+  component "收支与审核\n提交、修改、撤回、审核、驳回、作废" as Entry
+  component "分类与预算\n分类维护、月度预算" as Budget
+  component "查询与统计\n组合查询、分类统计、成员统计" as Query
+  component "结算与更正\n平均分摊、结算确认、差额调整" as Settlement
+  component "日志与数据访问\n日志记录查询、数据持久化、事务" as Data
+}
+
+database "关系数据库" as DB
+component "备份与恢复" as Backup
+
+UI --> Account
+UI --> Entry
+UI --> Budget
+UI --> Query
+UI --> Settlement
+UI --> Data : 按权限查询日志
+
+Entry ..> Account : 检查成员权限
+Entry ..> Budget : 校验分类
+Settlement ..> Entry : 选取并锁定有效记录
+
+Account --> Data
+Entry --> Data
+Budget --> Data
+Query --> Data
+Settlement --> Data
+Data --> DB
+Backup --> DB : 备份、恢复
+
+note bottom of Data
+  关键业务数据与日志在同一事务中保存。
+  所有模块在服务端检查身份和账本权限。
+  后端采用单体应用，不拆分微服务。
+end note
+@enduml
